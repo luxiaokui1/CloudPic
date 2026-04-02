@@ -1,0 +1,82 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: yu-picture-mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+      MYSQL_DATABASE: yu_picture
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./yu-picture-backend/sql/create_table.sql:/docker-entrypoint-initdb.d/init.sql
+    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p123456"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7
+    container_name: yu-picture-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  minio:
+    image: minio/minio
+    container_name: yu-picture-minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+
+  backend:
+    build: ./yu-picture-backend
+    container_name: yu-picture-backend
+    ports:
+      - "8123:8123"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/yu_picture
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: 123456
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+      SPRING_SHARDINGSPHERE_DATASOURCE_YU_PICTURE_URL: jdbc:mysql://mysql:3306/yu_picture
+      SPRING_SHARDINGSPHERE_DATASOURCE_YU_PICTURE_USERNAME: root
+      SPRING_SHARDINGSPHERE_DATASOURCE_YU_PICTURE_PASSWORD: 123456
+      COS_CLIENT_HOST: http://localhost:9000/yu-picture
+      COS_CLIENT_SECRETID: minioadmin
+      COS_CLIENT_SECRETKEY: minioadmin
+      COS_CLIENT_REGION: us-east-1
+      COS_CLIENT_BUCKET: yu-picture
+      COS_CLIENT_ENDPOINT: http://minio:9000
+      ALIYUNAI_APIKEY: placeholder
+      CLAUDE_APIKEY: your-claude-api-key-here
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      minio:
+        condition: service_started
+
+  frontend:
+    build: ./yu-picture-frontend
+    container_name: yu-picture-frontend
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+
+volumes:
+  mysql_data:
+  redis_data:
+  minio_data:
