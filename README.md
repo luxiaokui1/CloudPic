@@ -178,9 +178,29 @@ With Claude AI enabled:
 
 #### Setting up AI Image Expansion (Optional)
 
+AI Image Expansion (Out-Painting) automatically extends the boundaries of an image by generating new content around the edges using AI. For example:
+- Convert a portrait photo into a landscape by AI-generating the surrounding background
+- Extend a product photo's background for e-commerce banners
+- Fix poorly-cropped photos by AI-filling the missing edges
+
 1. Get an API key from [Alibaba Cloud DashScope](https://dashscope.aliyuncs.com/)
 2. Edit `docker-compose.yml`, change the `ALIYUNAI_APIKEY` value
 3. Restart the backend
+
+### Cost & Pricing
+
+**Running the entire platform costs $0** — all infrastructure runs locally in Docker.
+
+The only paid services are the **optional** AI API calls:
+
+| Service | What it does | Cost | Required? |
+|---|---|---|---|
+| **Claude API** (Anthropic) | Auto tagging, description, classification, content moderation on upload | ~$0.01-0.03 per image | Optional |
+| **DashScope API** (Alibaba Cloud) | AI image expansion (out-painting) | ~$0.01 per image | Optional |
+| MySQL, Redis, MinIO | Database, cache, file storage | **Free** (Docker) | Pre-configured |
+| Frontend, Backend | Application servers | **Free** (Docker) | Pre-configured |
+
+> **Note:** Without any API keys configured, the platform runs fully functional — AI features are simply skipped. You can add API keys at any time to enable AI capabilities.
 
 ### Services & Ports
 
